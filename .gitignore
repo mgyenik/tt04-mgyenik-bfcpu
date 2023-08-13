@@ -2,6 +2,7 @@
 .idea
 .vscode
 *.vcd
+*.swp
 runs
 src/sim_build
 src/__pycache__/
