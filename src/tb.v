@@ -23,7 +23,6 @@ module tb ();
     reg  [7:0] ui_in;
     reg  [7:0] uio_in;
 
-    wire [6:0] segments = uo_out[6:0];
     wire [7:0] uo_out;
     wire [7:0] uio_out;
     wire [7:0] uio_oe;
@@ -43,5 +42,17 @@ module tb ();
         .clk        (clk),      // clock
         .rst_n      (rst_n)     // not reset
         );
+
+    wire rdy;
+    wire ack;
+    wire [1:0] busctl;
+    wire [2:0] mtype;
+    assign rdy = uo_out[0];
+    assign ui_in[1] = ack;
+    assign busctl = uo_out[2:1];
+    assign mtype = uo_out[5:3];
+
+    wire halted;
+    assign halted = uo_out[6];
 
 endmodule

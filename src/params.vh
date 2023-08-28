@@ -3,4 +3,5 @@ localparam [2:0] // Types of memory transactions
   WDATA = 1,
   RCHAR = 2,
   WCHAR = 3,
-  RPROG = 4;
+  PROGN = 4,
+  PROGP = 5;
