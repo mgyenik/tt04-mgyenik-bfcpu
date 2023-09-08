@@ -14,44 +14,37 @@ module tt_um_mgyenik_bfcpu #( parameter MAX_COUNT = 24'd10_000_000 ) (
 
   localparam [5:0] // CPU states
     FETCH_REQ   = 0,
-    FETCH_WAIT  = 1,
-    FETCH_DONE  = 2,
-    DECODE      = 3,
-    DINC_LOAD   = 4,
-    DINC_WAIT   = 5,
-    DINC_DONE   = 6,
-    DINC        = 7,
-    DDEC_LOAD   = 8,
-    DDEC_WAIT   = 9,
-    DDEC_DONE   = 10,
-    DDEC        = 11,
-    PINC_WB     = 12,
-    PINC_WAIT   = 13,
-    PINC_DONE   = 14,
-    PINC        = 15,
-    PDEC_WB     = 16,
-    PDEC_WAIT   = 17,
-    PDEC_DONE   = 18,
-    PDEC        = 19,
-    HALT        = 20,
-    SCAN_LD          = 21,
-    SCAN_LD_WAIT     = 22,
-    SCAN_LD_DONE     = 23,
-    SCAN_START       = 24,
-    SCAN_FETCH       = 25,
-    SCAN_FETCH_WAIT  = 26,
-    SCAN_FETCH_DONE  = 27,
-    MEM_WAIT         = 28,
-    RCHAR_READ       = 29,
-    RCHAR_READ_DONE  = 30,
-    RCHAR_WB         = 31,
-    RCHAR_WB_DONE    = 32,
-    WCHAR_LD         = 33,
-    WCHAR_LD_DONE    = 34,
-    WCHAR_WRITE      = 35,
-    WCHAR_WRITE_DONE = 36,
-    HALT_WB         = 37,
-    HALT_WB_DONE    = 38;
+    FETCH_DONE  = 1,
+    DECODE      = 2,
+    DINC_LOAD   = 3,
+    DINC_DONE   = 4,
+    DINC        = 5,
+    DDEC_LOAD   = 6,
+    DDEC_DONE   = 7,
+    DDEC        = 8,
+    PINC_WB     = 9,
+    PINC_DONE   = 10,
+    PINC        = 11,
+    PDEC_WB     = 12,
+    PDEC_DONE   = 13,
+    PDEC        = 14,
+    HALT        = 15,
+    SCAN_LD          = 16,
+    SCAN_LD_DONE     = 17,
+    SCAN_START       = 18,
+    SCAN_FETCH       = 19,
+    SCAN_FETCH_DONE  = 20,
+    MEM_WAIT         = 21,
+    RCHAR_READ       = 22,
+    RCHAR_READ_DONE  = 23,
+    RCHAR_WB         = 24,
+    RCHAR_WB_DONE    = 25,
+    WCHAR_LD         = 26,
+    WCHAR_LD_DONE    = 27,
+    WCHAR_WRITE      = 28,
+    WCHAR_WRITE_DONE = 29,
+    HALT_WB         = 30,
+    HALT_WB_DONE    = 31;
 
   localparam [7:0] // Instructions, raw ascii
     I_DINC = 8'h2b,
@@ -155,14 +148,8 @@ module tt_um_mgyenik_bfcpu #( parameter MAX_COUNT = 24'd10_000_000 ) (
         FETCH_REQ: begin
           mtype <= PROGN;
           mreq <= 1;
-          state <= FETCH_WAIT;
-        end
-
-        FETCH_WAIT: begin
-          if (mdone)
-            state <= FETCH_DONE;
-          else
-            state <= FETCH_WAIT;
+          mem_wait_dst <= FETCH_DONE;
+          state <= MEM_WAIT;
         end
 
         FETCH_DONE: begin
@@ -229,14 +216,8 @@ module tt_um_mgyenik_bfcpu #( parameter MAX_COUNT = 24'd10_000_000 ) (
         DINC_LOAD: begin
           mtype <= RDATA;
           mreq <= 1;
-          state <= DINC_WAIT;
-        end
-
-        DINC_WAIT: begin
-          if (mdone)
-            state <= DINC_DONE;
-          else
-            state <= DINC_WAIT;
+          mem_wait_dst <= DINC_DONE;
+          state <= MEM_WAIT;
         end
 
         DINC_DONE: begin
@@ -254,14 +235,8 @@ module tt_um_mgyenik_bfcpu #( parameter MAX_COUNT = 24'd10_000_000 ) (
         DDEC_LOAD: begin
           mtype <= RDATA;
           mreq <= 1;
-          state <= DDEC_WAIT;
-        end
-
-        DDEC_WAIT: begin
-          if (mdone)
-            state <= DDEC_DONE;
-          else
-            state <= DDEC_WAIT;
+          mem_wait_dst <= DDEC_DONE;
+          state <= MEM_WAIT;
         end
 
         DDEC_DONE: begin
@@ -280,14 +255,8 @@ module tt_um_mgyenik_bfcpu #( parameter MAX_COUNT = 24'd10_000_000 ) (
           mdr_in <= data;
           mtype <= WDATA;
           mreq <= 1;
-          state <= PINC_WAIT;
-        end
-
-        PINC_WAIT: begin
-          if (mdone)
-            state <= PINC_DONE;
-          else
-            state <= PINC_WAIT;
+          mem_wait_dst <= PINC_DONE;
+          state <= MEM_WAIT;
         end
 
         PINC_DONE: begin
@@ -305,14 +274,8 @@ module tt_um_mgyenik_bfcpu #( parameter MAX_COUNT = 24'd10_000_000 ) (
           mdr_in <= data;
           mtype <= WDATA;
           mreq <= 1;
-          state <= PDEC_WAIT;
-        end
-
-        PDEC_WAIT: begin
-          if (mdone)
-            state <= PDEC_DONE;
-          else
-            state <= PDEC_WAIT;
+          mem_wait_dst <= PDEC_DONE;
+          state <= MEM_WAIT;
         end
 
         PDEC_DONE: begin
@@ -334,14 +297,8 @@ module tt_um_mgyenik_bfcpu #( parameter MAX_COUNT = 24'd10_000_000 ) (
         SCAN_LD: begin
           mtype <= RDATA;
           mreq <= 1;
-          state <= SCAN_LD_WAIT;
-        end
-
-        SCAN_LD_WAIT: begin
-          if (mdone)
-            state <= SCAN_LD_DONE;
-          else
-            state <= SCAN_LD_WAIT;
+          mem_wait_dst <= SCAN_LD_DONE;
+          state <= MEM_WAIT;
         end
 
         SCAN_LD_DONE: begin
@@ -381,14 +338,8 @@ module tt_um_mgyenik_bfcpu #( parameter MAX_COUNT = 24'd10_000_000 ) (
 
         SCAN_FETCH: begin
           mreq <= 1;
-          state <= SCAN_FETCH_WAIT;
-        end
-
-        SCAN_FETCH_WAIT: begin
-          if (mdone)
-            state <= SCAN_FETCH_DONE;
-          else
-            state <= SCAN_FETCH_WAIT;
+          mem_wait_dst <= SCAN_FETCH_DONE;
+          state <= MEM_WAIT;
         end
 
         SCAN_FETCH_DONE: begin
@@ -488,16 +439,4 @@ module tt_um_mgyenik_bfcpu #( parameter MAX_COUNT = 24'd10_000_000 ) (
       endcase
     end
   end
-
-  // genvar k;
-  // generate 
-  // 	for (k = 0; k < 64; k++) begin
-  //     assign init[k] = k;
-  // 		always@(posedge clk) begin
-  // 			if (reset) begin
-  // 				ucode[k] <= init[k];
-  // 			end
-  // 		end
-  // 	end
-  // endgenerate
 endmodule
