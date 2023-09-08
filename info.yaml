@@ -14,7 +14,7 @@ project:
   tiles: "1x2"    # Valid values: 1x1, 1x2, 2x2, 4x2 or 8x2
 
 # Keep a track of the submission yaml
-yaml_version: 4
+yaml_version: 5
 
 # As everyone will have access to all designs, try to make it easy for someone new to your design to know what
 # it does and how to operate it. This info will be automatically collected and used to make a datasheet for the chip.
@@ -24,62 +24,108 @@ documentation:
   author:       "Michael Yenik"
   title:        "BFCPU"
   language:     "Verilog"
-  description:  "Hardware brainfuck CPU"
+  description:  "Hardware BF CPU"
 
 # Longer description of how the project works. You can use standard markdown format.
   how_it_works: |
-      Uses a set of registers to divide the clock, and then some combinational logic
-      to convert from binary to decimal for the display.
+    A hardware CPU for the brainfuck esolang, with some BFISA extensions!
 
-      Puts the bottom 8 bits of the counter on the bidirectional outputs.
+    The program and data memory don't remotely fit onto the given area, so they
+    are handled externally using a custom asynchronous bus protocol. The bus
+    can perform certain types of transactions (read data, write data, read char
+    from I/O, write char to I/O, read next program word, read previous program
+    word). These correspond to reading/writing data memory, reading program
+    memory (the program counter is implicitly kept outside the BFCPU since it
+    only requests next/prev instructions), and doing I/O (BF . and ,
+    instructions).
 
-      With all the inputs set to 0, the internal 24 bit compare is set to 10,000,000. This means the
-      counter will increment by one each second.
+    The bus is controlled by the BFCPU, with the BFCPU setting the bus type and
+    ctrl pins, then setting the rdy output pin. When the bus device
+    implementing the data/program/IO sees a rising edge on rdy, it looks at the
+    type/ctrl pins to know what to do. In order to prevent bus conflicts, the
+    BFCPU does not drive the bus unless the bus en pin is set by the bus
+    device.
+    
+    This allows the bus device to see the rising rdy edge, get ready to read
+    whatever the BFCPU wants to put on the bus, set bus en, read it, and then
+    unset bus en. If the BFCPU is trying to read something, then the bus device
+    can simply drive the bus to the requested value.
 
-      If any inputs are non zero, then the input will be used as an bits 11 to 18 of the 24 bit compare register.
-      Example: setting the inputs to 00010000 will program 16384 into the compare register.
-      With a 10MHz clock the counter will increment ~610 times per second.
+    Once the bus device has either read what the BFCPU has to say or driven the
+    bus, it sets the ack input to the BFCPU to allow the BFCPU to continue the
+    transaction. The BFCPU will accept the ack by setting rdy low, the device
+    must continue to set ack until rdy goes low. In the case that the bus
+    device is driving the bus to a requested value, it must continue to drive
+    the bus until rdy goes low.
+    
+    When a bus transaction is initiated, the type of transaction
+    the CPU is trying to perform is put onto the bus type pins
+    - 000 - read data
+    - 001 - write data
+    - 010 - read char
+    - 011 - write char
+    - 100 - read next program byte
+    - 101 - read prev program byte
+
+    Since the data being read may be at an arbitrary 15 bit address, and we
+    don't have enough pins to easily make address and data lines, the address
+    and data are multiplexed onto the bus. When reading or writing from data
+    memory, the address will be written onto the bus one byte at a time, then
+    the data to be read/written will be placed onto the bus. In order to
+    coordinate with the device on the bus about which phase of the transaction
+    it's in, we use the two bus ctrl pins
+    - 00 - lower byte of address (for data read/write)
+    - 01 - upper byte of address (for data read/write)
+    - 11 - data phase (for data read/write, IO, and program read)
+
+    The BFCPU also supports a simple extension allowing from 2 up to 14
+    consecutive +, -, <, and > to be compressed into a-m, n-z, A-M, N-Z,
+    respectively. So the following BF program '++++>>>>' can be compressed into
+    'cC'.
 
 # Instructions on how someone could test your project, include things like what buttons do what and how to set the clock if needed
   how_to_test:  |
-      After reset, the counter should increase by one every second with a 10MHz input clock.
-      Experiment by changing the inputs to change the counting speed.
+      It needs a device paired with it that can read the bus signals and
+      interpret the reads/writes correctly in order to operate. See the
+      description above, as well as src/test.py in the github repo for an
+      example. Hopefully there will also eventually be some RP2040 firmware in
+      te repo to use with it!
 
 # A description of what the inputs do (e.g. red button, SPI CLK, SPI MOSI, etc).
   inputs:               
-    - compare bit 11
-    - compare bit 12
-    - compare bit 13
-    - compare bit 14
-    - compare bit 15
-    - compare bit 16
-    - compare bit 17
-    - compare bit 18
+    - bus en
+    - bus ack
+    - unused
+    - unused
+    - unused
+    - unused
+    - unused
+    - unused
 # A description of what the outputs do (e.g. status LED, SPI MISO, etc)
   outputs:
-    - segment a
-    - segment b
-    - segment c
-    - segment d
-    - segment e
-    - segment f
-    - segment g
-    - dot
+    - bus rdy
+    - bus ctrl bit 0
+    - bus ctrl bit 1
+    - bus type bit 0
+    - bus type bit 1
+    - bus type bit 2
+    - halted
+    - unused
 # A description of what the bidirectional I/O pins do (e.g. I2C SDA, I2C SCL, etc)
   bidirectional:
-    - second counter bit 0
-    - second counter bit 1
-    - second counter bit 2
-    - second counter bit 3
-    - second counter bit 4
-    - second counter bit 5
-    - second counter bit 6
-    - second counter bit 7
+    - bus bit 0
+    - bus bit 1
+    - bus bit 2
+    - bus bit 3
+    - bus bit 4
+    - bus bit 5
+    - bus bit 6
+    - bus bit 7
 
 # The following fields are optional
-  tag:          "timer, test"      # comma separated list of tags: test, encryption, experiment, clock, animation, utility, industrial, pwm, fpga, alu, microprocessor, risc, riscv, sensor, signal generator, fft, filter, music, bcd, sound, serial, timer, random number generator, calculator, decoder, counter, puzzle, multiplier, game, oscillator,
-  external_hw:  ""      # Describe any external hardware needed
-  discord:      "mattvenn"      # Your discord handle, used for communication and automatically assigning tapeout role after a submission
+  tag:          "cpu, brainfuck, cursed"      # comma separated list of tags: test, encryption, experiment, clock, animation, utility, industrial, pwm, fpga, alu, microprocessor, risc, riscv, sensor, signal generator, fft, filter, music, bcd, sound, serial, timer, random number generator, calculator, decoder, counter, puzzle, multiplier, game, oscillator,
+  external_hw:  "bus device (see above, probably RP2040 w/ fw)"      # Describe any external hardware needed
+  discord:      "mgyenik77"      # Your discord handle, used for communication and automatically assigning tapeout role after a submission
   doc_link:     ""      # URL to longer form documentation, eg the README.md in your repository
-  clock_hz:     10000000       # Clock frequency in Hz (if required)
+  clock_hz:     50000000       # Clock frequency in Hz (if required)
   picture:      ""      # relative path to a picture in your repository

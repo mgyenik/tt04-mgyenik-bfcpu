@@ -131,6 +131,7 @@ async def run_program(dut, inp, program):
 
         # Deassert ack when rdy falls
         await FallingEdge(dut.rdy)
+        dut.uio_in.value.assign('ZZZZZZZZ')
         dut.ack.value = 0
 
     # print(bytes(out).decode(encoding='utf-8', errors='strict'))
@@ -142,6 +143,7 @@ async def do_reset(dut):
     dut._log.info("reset")
     dut.rst_n.value = 0
     dut.ui_in.value = 0
+    dut.uio_in.value.assign('ZZZZZZZZ')
     await ClockCycles(dut.clk, 10)
     dut.rst_n.value = 1
 
