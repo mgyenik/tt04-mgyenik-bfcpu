@@ -1,3 +1,6 @@
+from string import ascii_lowercase as alc
+from string import ascii_uppercase as auc
+
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, FallingEdge, Timer, ClockCycles, First
@@ -7,6 +10,32 @@ def int2str(i):
 
 def str2int(s):
     return int(s, 2)
+
+def split(l):
+    f = l[:len(l)//2]
+    b = l[len(l)//2:]
+    return f,b
+
+def opt(prog):
+    dincs, ddecs = split(alc)
+    pincs, pdecs = split(auc)
+
+    replacements = []
+    for i, c in enumerate(dincs):
+        replacements.append(['+'*(i+2), c])
+    for i, c in enumerate(ddecs):
+        replacements.append(['-'*(i+2), c])
+    for i, c in enumerate(pincs):
+        replacements.append(['>'*(i+2), c])
+    for i, c in enumerate(pdecs):
+        replacements.append(['<'*(i+2), c])
+
+    replacements.reverse()
+    for r, c in replacements:
+        prog = prog.replace(r, c)
+
+    print(prog)
+    return prog
 
 async def read_bus(dut):
     dut.ui_in[0].value = 1
@@ -134,7 +163,15 @@ class TestProgram(object):
         self.input_bytes = self.input_bytes[1:]
         return b
 
-    async def run(self, dut):
+    def check(self, mem, output):
+        if self.expected_mem != None:
+            for i, v in enumerate(self.expected_mem):
+                assert mem[i] == v
+
+        if self.expected_out != None:
+            assert output == self.expected_out
+
+    async def run(self, dut, run_opt=True):
         dut._log.info(f'running test {self.name}')
         await do_reset(dut)
         mem, output = await run_program(dut, self.input_bytes, self.prog)
@@ -144,29 +181,32 @@ class TestProgram(object):
             for line in output.splitlines():
                 dut._log.info(f'    "{line}"')
 
-        if self.expected_mem != None:
-            # print('expected')
-            # print(self.expected_mem)
-            # print('actual')
-            # print(mem[:len(self.expected_mem)])
-            for i, v in enumerate(self.expected_mem):
-                assert mem[i] == v
+        self.check(mem, output)
 
-        if self.expected_out != None:
-            assert output == self.expected_out
+
+        dut._log.info(f'running opt test {self.name}')
+        await do_reset(dut)
+        mem, output = await run_program(dut, self.input_bytes, opt(self.prog))
+
+        if len(output) != 0:
+            dut._log.info('test output:')
+            for line in output.splitlines():
+                dut._log.info(f'    "{line}"')
+
+        self.check(mem, output)
 
 
 test_cases = [
-    # TestProgram(
-    #     name = 'basic inc/dec',
-    #     prog = '++++-->+<#$',
-    #     expected_mem = [2, 1, 0],
-    # ),
-    # TestProgram(
-    #     name = 'basic loop',
-    #     prog = '+++[>++<-]#$',
-    #     expected_mem = [0, 6, 0],
-    # ),
+    TestProgram(
+        name = 'basic inc/dec',
+        prog = '++++-->+<#$',
+        expected_mem = [2, 1, 0],
+    ),
+    TestProgram(
+        name = 'basic loop',
+        prog = '+++[>++<-]#$',
+        expected_mem = [0, 6, 0],
+    ),
     TestProgram(
         name = 'xmas 7',
         prog = \

@@ -44,12 +44,10 @@ module bus_controller (
     ADDR0_WAIT  = 2,
     ADDR1_WRITE = 3,
     ADDR1_WAIT  = 4,
-    /* ADDR2_WRITE = 5, */
-    /* ADDR2_WAIT  = 6, */
-    WDATA_DO    = 7,
-    WDATA_WAIT  = 8,
-    RDATA_DO    = 9,
-    RDATA_WAIT  = 10;
+    WDATA_DO    = 5,
+    WDATA_WAIT  = 6,
+    RDATA_DO    = 7,
+    RDATA_WAIT  = 8;
 
   reg [3:0] controller_state;
 
@@ -57,8 +55,6 @@ module bus_controller (
   // transaction.
   reg mreq_dly;
   reg mreq_dly2;
-  /* reg mreq_posedge; */
-  /* reg mreq_negedge; */
   wire mreq_posedge;
   wire mreq_negedge;
   assign mreq_posedge = mreq & ~mreq_dly2;
@@ -67,32 +63,16 @@ module bus_controller (
     if (reset) begin
       mreq_dly <= 0;
       mreq_dly2 <= 0;
-      /* mreq_posedge <= 0; */
-      /* mreq_negedge <= 0; */
     end else begin
-      /* mreq_posedge = mreq & ~mreq_dly; */
-      /* mreq_negedge = ~mreq & mreq_dly; */
       mreq_dly <= mreq;
       mreq_dly2 <= mreq_dly;
     end
   end
-  /* always @(negedge clk) begin */
-  /*   if (reset) begin */
-  /*     mreq_posedge <= 0; */
-  /*     mreq_negedge <= 0; */
-  /*   end else begin */
-  /*     mreq_posedge <= mreq & ~mreq_dly; */
-  /*     mreq_negedge <= ~mreq & mreq_dly; */
-  /*   end */
-  /* end */
 
   // Detect positive edge on ack, used to detect when slave is ready to
   // continue transaction.
-
   reg ack_dly;
   reg ack_dly2;
-  /* reg ack_posedge; */
-  /* reg ack_negedge; */
   wire ack_posedge;
   wire ack_negedge;
   assign ack_posedge = ack & ~ack_dly2;
@@ -101,27 +81,11 @@ module bus_controller (
     if (reset) begin
       ack_dly <= 0;
       ack_dly2 <= 0;
-      /* ack_posedge <= 0; */
-      /* ack_negedge <= 0; */
     end else begin
-      /* ack_posedge = ack & ~ack_dly; */
-      /* ack_negedge = ~ack & ack_dly; */
       ack_dly <= ack;
       ack_dly2 <= ack_dly;
     end
   end
-  /* reg ack_dly; */
-  /* wire ack_posedge; */
-  /* wire ack_negedge; */
-  /* assign ack_posedge = ack & ~ack_dly; */
-  /* assign ack_negedge = ~ack & ack_dly; */
-  /* always @(posedge clk) begin */
-  /*   if (reset) begin */
-  /*     ack_dly <= 0; */
-  /*   end else begin */
-  /*     ack_dly <= ack; */
-  /*   end */
-  /* end */
 
   always @(posedge clk) begin
     if (reset) begin
@@ -170,7 +134,6 @@ module bus_controller (
         end
         ADDR1_WAIT: begin
           if (ack_posedge) begin
-            /* controller_state <= ADDR2_WRITE; */
             rdy <= 0;
             case (mtype)
               RDATA: controller_state <= RDATA_DO;
@@ -184,28 +147,6 @@ module bus_controller (
             endcase
           end
         end
-
-        /* ADDR2_WRITE: begin */
-        /*   bus_out <= addr[23:16]; */
-        /*   bus_ctrl <= ADDR2; */
-        /*   rdy <= 1; */
-        /*   controller_state <= ADDR2_WAIT; */
-        /* end */
-        /* ADDR2_WAIT: begin */
-        /*   if (ack_posedge) begin */
-        /*     rdy <= 0; */
-        /*     case (mtype) */
-        /*       RDATA: controller_state <= RDATA_DO; */
-        /*       WDATA: controller_state <= WDATA_DO; */
-
-        /*       // Should be impossible to end up here with these mtypes... */
-        /*       RCHAR: controller_state <= RDATA_DO; */
-        /*       WCHAR: controller_state <= WDATA_DO; */
-        /*       PROGN: controller_state <= RDATA_DO; */
-        /*       PROGP: controller_state <= RDATA_DO; */
-        /*     endcase */
-        /*   end */
-        /* end */
 
         WDATA_DO: begin
           bus_out <= data_in;
