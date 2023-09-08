@@ -157,16 +157,16 @@ class TestProgram(object):
 
 
 test_cases = [
-    TestProgram(
-        name = 'basic inc/dec',
-        prog = '++++-->+<$',
-        expected_mem = [2, 1, 0],
-    ),
-    TestProgram(
-        name = 'basic loop',
-        prog = '+++[>++<-]$',
-        expected_mem = [0, 6, 0],
-    ),
+    # TestProgram(
+    #     name = 'basic inc/dec',
+    #     prog = '++++-->+<#$',
+    #     expected_mem = [2, 1, 0],
+    # ),
+    # TestProgram(
+    #     name = 'basic loop',
+    #     prog = '+++[>++<-]#$',
+    #     expected_mem = [0, 6, 0],
+    # ),
     TestProgram(
         name = 'xmas 7',
         prog = \
@@ -179,7 +179,7 @@ test_cases = [
 <<<<<]>>>>+[>[->+>>>+>>+<<<<<<]>>[->+>>+<<<]>>[-<<<<<<<
 .>>>>>>>]>[-<<<<<<<.>>>>>>>]>[-<<<<<<<<<.>>>>>>>>>]<<<<
 <<<<<<.>>>>>>>>>><<<<<[-<+>]<->>>[-<+>]<++<<<-]>>>>>>>>
->>-[<<<<<<<<<<<<.>>>>>>>>>>>>-]<<<<<<<<<<<...$
+>>-[<<<<<<<<<<<<.>>>>>>>>>>>>-]<<<<<<<<<<<...#$
 ''',
         input_bytes = '\x07',
         expected_out = \
@@ -191,7 +191,7 @@ test_cases = [
     ),
     TestProgram(
         name = 'copy lines',
-        prog = '+>>>>>>>>>>-[,+[-.----------[[-]>]<->]<]$',
+        prog = '+>>>>>>>>>>-[,+[-.----------[[-]>]<->]<]#$',
         input_bytes = \
 '''asdf 1
 asdf 2

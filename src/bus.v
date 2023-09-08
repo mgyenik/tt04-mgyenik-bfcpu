@@ -4,7 +4,7 @@ module bus_controller (
   input wire reset,
 
   // Address and data regs from cpu
-  input wire [23:0] addr,
+  input wire [15:0] addr,
   input wire [7:0] data_in,
   output reg [7:0] data_out,
 
@@ -35,7 +35,7 @@ module bus_controller (
   localparam [1:0] // Bus control output values
     ADDR0 = 0,
     ADDR1 = 1,
-    ADDR2 = 2,
+    /* ADDR2 = 2, */
     DATA = 3;
 
   localparam [3:0] // Bus controller states
@@ -44,8 +44,8 @@ module bus_controller (
     ADDR0_WAIT  = 2,
     ADDR1_WRITE = 3,
     ADDR1_WAIT  = 4,
-    ADDR2_WRITE = 5,
-    ADDR2_WAIT  = 6,
+    /* ADDR2_WRITE = 5, */
+    /* ADDR2_WAIT  = 6, */
     WDATA_DO    = 7,
     WDATA_WAIT  = 8,
     RDATA_DO    = 9,
@@ -170,19 +170,7 @@ module bus_controller (
         end
         ADDR1_WAIT: begin
           if (ack_posedge) begin
-            controller_state <= ADDR2_WRITE;
-            rdy <= 0;
-          end
-        end
-
-        ADDR2_WRITE: begin
-          bus_out <= addr[23:16];
-          bus_ctrl <= ADDR2;
-          rdy <= 1;
-          controller_state <= ADDR2_WAIT;
-        end
-        ADDR2_WAIT: begin
-          if (ack_posedge) begin
+            /* controller_state <= ADDR2_WRITE; */
             rdy <= 0;
             case (mtype)
               RDATA: controller_state <= RDATA_DO;
@@ -196,6 +184,28 @@ module bus_controller (
             endcase
           end
         end
+
+        /* ADDR2_WRITE: begin */
+        /*   bus_out <= addr[23:16]; */
+        /*   bus_ctrl <= ADDR2; */
+        /*   rdy <= 1; */
+        /*   controller_state <= ADDR2_WAIT; */
+        /* end */
+        /* ADDR2_WAIT: begin */
+        /*   if (ack_posedge) begin */
+        /*     rdy <= 0; */
+        /*     case (mtype) */
+        /*       RDATA: controller_state <= RDATA_DO; */
+        /*       WDATA: controller_state <= WDATA_DO; */
+
+        /*       // Should be impossible to end up here with these mtypes... */
+        /*       RCHAR: controller_state <= RDATA_DO; */
+        /*       WCHAR: controller_state <= WDATA_DO; */
+        /*       PROGN: controller_state <= RDATA_DO; */
+        /*       PROGP: controller_state <= RDATA_DO; */
+        /*     endcase */
+        /*   end */
+        /* end */
 
         WDATA_DO: begin
           bus_out <= data_in;
